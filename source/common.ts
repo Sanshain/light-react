@@ -180,22 +180,6 @@ function get_scroll_wide(elem){
 
 
 
-
-
-/*!!
-	 ie10+. 
-*/
-if (!String.prototype.startsWith) {
-	
-	String.prototype.startsWith = function(search, pos)
-	{
-		  let position = pos || 0;
-		  var r = this.substr(pos, search.length) === search;		  
-		  return r;			
-	};
-}//*/
-
-
 /*!
 	 css
 */
