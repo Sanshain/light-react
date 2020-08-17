@@ -122,6 +122,9 @@ function get_maxim(enumble, field_in){ //get_maximum
 
 }
 
+
+
+
 /*!
 	\brief fixed
 	
@@ -129,7 +132,7 @@ function get_maxim(enumble, field_in){ //get_maximum
 
 	\required ie10+
 */
-function search_fixed(container, deep){
+function search_fixed(container : HTMLElement, deep : number){
 	
 	if (deep == 0) return null;
 	else 
@@ -183,7 +186,7 @@ function get_scroll_wide(elem){
 /*!
 	 css
 */
-function Elem(type_name, txt, css_cls){		
+function Elem(type_name: keyof HTMLElementTagNameMap, txt: string, css_cls: string){		
 	var elem = document.createElement(type_name);	
 	elem.innerText = txt;	//value
 	
@@ -193,4 +196,3 @@ function Elem(type_name, txt, css_cls){
 	
 	return elem;	
 }
-

@@ -2,7 +2,7 @@
 var ENCTYPE = 'application/x-www-form-urlencoded';
 
 
-function getCookie(name) {
+function getCookie(name: string) {
 	var cookieValue = null;
 	if (document.cookie && document.cookie != '') {
 		var cookies = document.cookie.split(';');
