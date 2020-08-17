@@ -5,23 +5,39 @@ type Dom = Document & {
 	get?: <K extends keyof HTMLElementTagNameMap>(selectors: K) => HTMLElementTagNameMap[K] | null;
 };
 
+// export var dom = {...window.document, obj: document.getElementById, get: document.querySelector};
 export var dom: Dom = window.document;
-
 dom.obj = document.getElementById;
 dom.get = document.querySelector;
-var loc = document.location;
 
-interface HTMLLIElement {
-    appendChilds(): void;
+export var loc = document.location;
+
+
+
+declare global{
+	interface HTMLLIElement{
+		appendChilds(): void;
+	}
+
+	interface HTMLElement{
+		vs(dict: Object): HTMLElement;
+	}
+
+	interface DOMTokenList{
+		Toggle(old: String, recent: String): void;
+	}
 }
 
-HTMLLIElement.prototype.appendChilds = function (): void {
+HTMLLIElement.prototype.appendChilds = function () {
 
   for ( var i = 0 ; i < arguments.length ; i++ )
 
     this.appendChild( arguments[ i ] );
 
 };
+
+
+
 
 /*!
 	 class
@@ -35,6 +51,8 @@ HTMLElement.prototype.vs = function (dict) {
 
 	return this;
 };
+
+
 
 /*!
 	
@@ -171,16 +189,10 @@ if (!String.prototype.startsWith) {
 	
 	String.prototype.startsWith = function(search, pos)
 	{
-		  position = pos || 0;
-		  var r = this.substr(pos, search.length) === search;
-		  /*
-		  if (r){
-			console.log(r);
-		  }//*/
-		  return r;
-			
+		  let position = pos || 0;
+		  var r = this.substr(pos, search.length) === search;		  
+		  return r;			
 	};
-
 }//*/
 
 
