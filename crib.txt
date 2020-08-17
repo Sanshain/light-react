@@ -1,0 +1,13 @@
+For promises:
+
+https://www.npmjs.com/package/bluebird
+https://www.npmjs.com/package/promise-polyfill
+
+Other polyfill: 
+
+https://www.npmjs.com/package/polyfill-library
+https://www.npmjs.com/package/rollup-plugin-polyfill
+
+Multiimport: 
+
+https://www.npmjs.com/package/rollup-plugin-multi-input
