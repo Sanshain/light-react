@@ -14,8 +14,8 @@ import { object } from "underscore";
 
 var ENCTYPE = 'application/x-www-form-urlencoded';
 
-
-function getCookie(name: string) {
+//: ie8+
+function getCookie(name: string) : null|string {
 	var cookieValue = null;
 	if (document.cookie && document.cookie != '') {
 		var cookies = document.cookie.split(';');
@@ -34,44 +34,35 @@ function getCookie(name: string) {
 }
 
 /*!
-
     Принимает в качестве data строку в виде get-параметров или объект, который преобрзуется в эту строку.
-
 */
-function POST_AJAX(data, url){
+function POST_AJAX(data: object|String, url : string){
 					
-	if (url == undefined) url = window.location.href;
-					
-	var csrftoken = getCookie('csrftoken');	
-
-
-   if (typeof data == typeof null){        // "object"
-		
-		var s = "";
-		for (var k in data) s += k + '=' + data[k] + '&';
-		if (s) data = s.slice(0,-1);
-	}
+	if (typeof data == typeof null) data = u.params(data);
 	
+	
+	url = url || window.location.href;										// 1 подготовили url
+	data = 'csrfmiddlewaretoken=' + getCookie('csrftoken') + '&' + data;	// 0 подготовили данные для отправки
 
-	data = 'csrfmiddlewaretoken=' + csrftoken + '&' + data;		
-
-	// 1. Создаём новый объект XMLHttpRequest			
-	var xhr = new XMLHttpRequest();				
+	
+	var xhr = new XMLHttpRequest();											// 1. Создаём новый объект XMLHttpRequest			
 	
 	// 2. Конфигурируем его: GET-запрос на URL /submit
-	xhr.open("POST", url, true);						//метод, адрес, асинхрон/неасинхронный
+	xhr.open("POST", url, true);											//метод, адрес, асинхрон/неасинхронный
+		
+	xhr.setRequestHeader('Content-Type', ENCTYPE);							// 3. Устанавливаем заголовк ENCTYPE
 	
-	// 3. Устанавливаем заголовк ENCTYPE
-	xhr.setRequestHeader('Content-Type', ENCTYPE);	
-	
-	xhr.timeout = 3000;						
+	xhr.timeout = 3000;
 	
 	xhr.onreadystatechange = function() {					
-				
+		
 		if (XMLHttpRequest['status']){										//для ie8
 			if (xhr.status != 200) 
-			{					
-				alert("Не удалось отправить запрос: " + xhr.statusText + ' на ' + this.readyState + " этапе");					
+			{
+				//#if DEBUG
+				console.warn("Не удалось отправить запрос: " + xhr.statusText + ' на ' + this.readyState + " этапе");					
+				if (this.readyState == 4) alert("POST_AJAX " + xhr.statusText + ' : ' + this.readyState);
+				//#endif
 			}
 		}			
 		
@@ -90,30 +81,27 @@ function POST_AJAX(data, url){
 			}
 			
 		}						
-		
-		//if (this.readyState == 4) alert('запрос завершен');
+			
 	}		
 	
-	xhr.send(data);
+	xhr.send(data as string);
 	
 }
 
 //подробно https://learn.javascript.ru/ajax-xmlhttprequest
-function POST(data, func, csrftoken){				
+function POST(data: string|object, func: (response: string)=>void, csrftoken?:string){				
 					
-	if (csrftoken == undefined) csrftoken = getCookie('csrftoken');	
-
+	csrftoken = csrftoken || getCookie('csrftoken');	
 	data = 'csrfmiddlewaretoken=' + csrftoken + '&' + data;		
-	var url = window.location.href;
 
-	// 1. Создаём новый объект XMLHttpRequest			
-	var xhr = new XMLHttpRequest();				
+	var url = window.location.href;										// 0. получаем url
+
+	var xhr = new XMLHttpRequest();										// 1. Создаём новый объект XMLHttpRequest			
 	
 	// 2. Конфигурируем его: GET-запрос на URL /submit
 	xhr.open("POST", url, true);						//метод, адрес, асинхрон/неасинхронный
-	
-	// 3. Устанавливаем заголовк ENCTYPE
-	xhr.setRequestHeader('Content-Type', ENCTYPE);	
+		
+	xhr.setRequestHeader('Content-Type', ENCTYPE);						// 3. Устанавливаем заголовк ENCTYPE
 	
 	xhr.timeout = 30000;													// для лонг пул				
 	
@@ -124,28 +112,18 @@ function POST(data, func, csrftoken){
 		if (XMLHttpRequest['status']){										//для ie8
 			if (xhr.status != 200) 
 			{					
-				alert("Не удалось отправить запрос: " + xhr.statusText + ' на ' + this.readyState + " этапе");					
+				console.warn("Не удалось отправить запрос: " + xhr.statusText + ' на ' + this.readyState + " этапе");	
+				if (this.readyState == 4)  alert("POST " + xhr.statusText + ' : ' + this.readyState);				
 			}
 		}			
 		
-		if (this.readyState == 3) {				
-		
-			//unresponsed = false;							
-			//func(this.responseText);
-			
-			console.log('3: ' + this.responseText);
-			
-			//alert("responseText3: " + this.responseText);			
-
-		}	
+		if (this.readyState == 3) console.log('3: ' + this.responseText);
 
 		if (this.readyState == 4 && unresponsed) {	
 			
 			console.log('4: ' + this.responseText);
 			
-			unresponsed = false;			
-			
-			//alert("responseText4: " + this.responseText);
+			unresponsed = false;								
 				
 			func(this.responseText);
 		}		
