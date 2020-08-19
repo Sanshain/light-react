@@ -12,5 +12,9 @@
   "devDependencies": {
     "@rollup/plugin-typescript": "^5.0.2",
     "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "@types/underscore": "^1.10.22",
+    "underscore": "^1.10.2"
   }
 }

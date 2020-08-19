@@ -26,6 +26,9 @@ declare global{
 	interface DOMTokenList{
 		Toggle(old: String, recent: String): void;
 	}
+	interface XMLHttpRequest{
+		onfail(): void;
+	}
 }
 
 HTMLLIElement.prototype.appendChilds = function () {
@@ -142,7 +145,7 @@ function search_fixed(container : HTMLElement, deep : number){
 	
 	var i=0; while(i<childs.length)
 	{
-		var elem = childs[i++];
+		var elem = childs[i++] as HTMLElement;
 		if (window.getComputedStyle(elem).position == 'fixed'){						//ie9+, 
 			return elem;
 		}
@@ -196,3 +199,5 @@ function Elem(type_name: keyof HTMLElementTagNameMap, txt: string, css_cls: stri
 	
 	return elem;	
 }
+
+
