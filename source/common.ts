@@ -1,3 +1,4 @@
+import { vom } from "./base";
 
 
 type Dom = Document & { 

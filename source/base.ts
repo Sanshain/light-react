@@ -1,4 +1,73 @@
+import { dom } from "./common";
 
+
+
+
+
+
+
+type Vom = ((elem : HTMLElement) => {state? : string}) & {	
+	
+	spa?: boolean;
+	reInit? : Function;
+	
+	add? : (container : string| HTMLElement, elem:string|HTMLElement, cls?:string) => HTMLElement;
+	create? : (tagname: string, attrs: object) => HTMLElement;
+	parent_container? : (cfield:HTMLElement) => HTMLElement;
+};
+
+
+export var vom: Vom = function(elem : HTMLElement): {state? : string}{
+
+	var robj: {state? : string} = {};
+	
+	var _state = function(){
+		var r = elem.getAttribute('data-state');
+		
+		if (!r){
+			
+			/* for recursive:
+			
+			var rec = function(container, deep){
+				
+				var rc = container.firstElementChild;
+				if (rc) r = rc.id || 
+				(
+					rc.className ? 
+					rc.className.split(' ')[0] : 
+					null
+				);
+				else return null;				
+			}//*/
+			
+			var rc = elem.firstElementChild;
+			if (rc) r = 
+				rc.getAttribute('data-state') || rc.id || 
+				(
+					rc.className ? 
+					rc.className.split(' ')[0] : 
+					null
+				);							
+				
+			else return null;
+		}
+		return r;
+	}
+	
+	
+	if (window.atob) Object.defineProperty(robj, 'state', {get: _state})	;
+	else 		
+		robj.state = _state();
+	
+	return robj;
+}
+
+
+
+
+
+
+// export var vom : Vom;
 
 
 /*! render for part of page...
@@ -6,7 +75,7 @@
 	@param data - ответ от сервера (данные для рендеринга)
 	@param url - url для изменения в адресной строке браузера
 */
-var render_page = function(data, url){					
+var render_page = function(data: jsonString, url: string){					
 
 	while(typeof data == "string") data = JSON.parse(data);
 	
@@ -28,7 +97,7 @@ var render_page = function(data, url){
 
 
 
-abstract_viewer = {
+export var abstract_viewer = {
 	
 	/*! Get or find property_name for replacement its value
 		
@@ -36,7 +105,7 @@ abstract_viewer = {
 		
 		по дефолту используется для анимации
 	*/	
-	property : function(field){ //
+	property : function(field : HTMLElement){ //
 
 		//don't chenage the order src and href for ie support:
 		var i=-1; var attr = ''; var attrs = ['src', 'href', field.children ? 'innerHTML' : 'innerText'];
@@ -96,7 +165,7 @@ function Viewer(data){
 		//alert(0);
 		console.log(history.state);
 		
-		for(key in history.state) {
+		for(let key in history.state) {
 			
 			var field=document.getElementById(key.toLowerCase());
 			var view = history.state[key];			
@@ -107,7 +176,7 @@ function Viewer(data){
 				
 			else if (typeof view == "object")
 			{
-				for (k in view) 
+				for (let k in view) 
 				{
 
 					if (k.startsWith('on')) field.setAttribute(k, view[k]);
@@ -125,12 +194,9 @@ function Viewer(data){
 	*/
 	this.render = function(){
 
-		for (key in new_view)
+		for (let key in new_view)
 		{
-			this.render_field(
-				key, 
-				new_view[key]
-			);
+			this.render_field(key, new_view[key]);
 		}
 		
 		return this;
@@ -157,13 +223,13 @@ function Viewer(data){
 	
 		Ищет эелемент key на странице и заполняет его view
 	*/
-	this.render_field = function(key, view){
+	this.render_field = function(key:string, view: string){
 		
 		var field=null;
 		
 		if (key[0] == '<')
 		{
-			cfield=dom.obj(key.slice(1).toLowerCase());
+			let cfield = dom.obj(key.slice(1).toLowerCase());
 
 			field = vom.parent_container(cfield);
 		}
@@ -229,7 +295,7 @@ function Viewer(data){
 		else if (typeof view == "object"){
 			
 			stored_data[key] = {};
-			for (k in view) 
+			for (let k in view as String) 
 			{
 				if (1+['object','function'].indexOf(typeof field[k]))
 				{
@@ -288,59 +354,6 @@ function Viewer(data){
 
 
 //vom = {};
-
-function vom(elem){
-	
-	var robj = {};
-	
-	var _state = function(){
-		var r = elem.getAttribute('data-state');
-		
-		if (!r){
-			
-			/* for recursive:
-			
-			var rec = function(container, deep){
-				
-				var rc = container.firstElementChild;
-				if (rc) r = rc.id || 
-				(
-					rc.className ? 
-					rc.className.split(' ')[0] : 
-					null
-				);
-				else return null;				
-			}//*/
-			
-			var rc = elem.firstElementChild;
-			if (rc) r = 
-				rc.getAttribute('data-state') || rc.id || 
-				(
-					rc.className ? 
-					rc.className.split(' ')[0] : 
-					null
-				);
-				
-			
-				
-			else return null;
-		}
-		return r;
-	}
-	
-	
-	
-	if (window.atob)
-		
-		Object.defineProperty(robj, 'state', {get: _state})	;
-	else 
-		
-		robj.state = _state();
-
-	
-	return robj;
-}
-
 //vom(elem).state
 
 
@@ -352,11 +365,10 @@ vom.spa = false;
 
 
 
-vom.add = function(container, elem, cls)
+vom.add = function(container : string| HTMLElement, elem:string|HTMLElement, cls?:string):HTMLElement
 {
-	if (typeof container == 'string') 	{	
-		container = document.querySelector(container);
-		}
+	if (typeof container == 'string') container = document.querySelector(container) as HTMLElement;
+	
 	if (typeof elem == 'string'){
 		
 		elem = document.createElement(elem);
@@ -369,7 +381,7 @@ vom.add = function(container, elem, cls)
 	return elem;		
 };
 
-vom.create = function(tagname, attrs){
+vom.create = function(tagname: string, attrs: object):HTMLElement{
 	var elem = document.createElement(tagname);
 	for (var attr in attrs){
 		elem[attr]=attrs[attr];
@@ -380,7 +392,7 @@ vom.create = function(tagname, attrs){
 /*!
 	Ищет родительский контейнер. Как вариант еще добавить поиск по атрибуту data-_refresh
 */
-vom.parent_container = function(cfield){
+vom.parent_container = function(cfield:HTMLElement){
 	
 	var _root = cfield.parentElement;
 	
