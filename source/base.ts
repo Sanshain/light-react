@@ -2,22 +2,68 @@ import { dom } from "./common";
 
 
 
+namespace om{
 
-
-
-
-type Vom = ((elem : HTMLElement) => {state? : string}) & {	
+	// ((elem : HTMLElement) => {state? : string}) 
+	export type Extension = {	
 	
-	spa?: boolean;
-	reInit? : Function;
+		spa?: boolean;
+		reInit? : Function;
+		
+		add? : (container : string| HTMLElement, elem:string|HTMLElement, cls?:string) => HTMLElement;
+		create? : (tagname: string, attrs: object) => HTMLElement;
+		parent_container? : (cfield:HTMLElement) => HTMLElement;
+	};//*/
 	
-	add? : (container : string| HTMLElement, elem:string|HTMLElement, cls?:string) => HTMLElement;
-	create? : (tagname: string, attrs: object) => HTMLElement;
-	parent_container? : (cfield:HTMLElement) => HTMLElement;
-};
+
+	/*! 
+		функции инициализации фрагментов
+	*/
+	vom.spa = false;
+
+	vom.add = function(container : string| HTMLElement, elem:string|HTMLElement, cls?:string):HTMLElement
+	{
+		if (typeof container == 'string') container = document.querySelector(container) as HTMLElement;
+		
+		if (typeof elem == 'string'){
+			
+			elem = document.createElement(elem);
+			if (cls) elem.className = cls;
+			
+		}
+		
+		container.appendChild(elem);
+		
+		return elem;		
+	};
+
+	vom.create = function(tagname: string, attrs: object):HTMLElement{
+		var elem = document.createElement(tagname);
+		for (var attr in attrs){
+			elem[attr]=attrs[attr];
+		}
+		return elem;
+	}
+
+	/*!
+		Ищет родительский контейнер. Как вариант еще добавить поиск по атрибуту data-_refresh
+	*/
+	vom.parent_container = function(cfield:HTMLElement){
+		
+		var _root = cfield.parentElement;
+		
+		if (_root.id) {
+			
+			return _root;
+		}		
+		else 
+			return vom.parent_container(_root);
+
+	}
+}
 
 
-export var vom: Vom = function(elem : HTMLElement): {state? : string}{
+export var vom: ((elem : HTMLElement) => {state? : string}) & om.Extension = function(elem){
 
 	var robj: {state? : string} = {};
 	
@@ -64,18 +110,12 @@ export var vom: Vom = function(elem : HTMLElement): {state? : string}{
 
 
 
-
-
-
-// export var vom : Vom;
-
-
 /*! render for part of page...
 
 	@param data - ответ от сервера (данные для рендеринга)
 	@param url - url для изменения в адресной строке браузера
 */
-var render_page = function(data: jsonString, url: string){					
+export var render_page = function(data: jsonString, url: string){					
 
 	while(typeof data == "string") data = JSON.parse(data);
 	
@@ -97,7 +137,7 @@ var render_page = function(data: jsonString, url: string){
 
 
 
-export var abstract_viewer = {
+class AbstractViewer {
 	
 	/*! Get or find property_name for replacement its value
 		
@@ -105,25 +145,23 @@ export var abstract_viewer = {
 		
 		по дефолту используется для анимации
 	*/	
-	property : function(field : HTMLElement){ //
+	property(field : HTMLElement, view?: string){ //		
 
-		//don't chenage the order src and href for ie support:
-		var i=-1; var attr = ''; var attrs = ['src', 'href', field.children ? 'innerHTML' : 'innerText'];
+		var contentAttr = view
+			? (view.trim().startsWith('<')?'innerHTML':'innerText')
+			: (field.children ? 'innerHTML' : 'innerText');
 		
-		while(!(field[ attr=attrs[++i] ])) 
-			if (i>1) break;	
+		var i=-1; var attr = ''; var attrs = ['src', 'href', 'value', contentAttr];				// don't chanage the order src and href for ie support
+
+		while(field[ attr=attrs[++i] ] == void 0) if (i == attr.length - 1) break;
 
 		return attr;
 	}	
 }
 
+// function Renderer(boxes: any){ return render_page; }
 
 
-
-function Renderer(boxes){
-		
-	return render_page;
-}
 
 
 						/* class Viewer*/
@@ -133,15 +171,197 @@ function Renderer(boxes){
 	Рендерит поля страницы на основе входных данных
 */
 
+namespace irt{
 
+	export class Viewer extends AbstractViewer{
+		
+		private _containers: HTMLElement[] = [];
+		private __container_rebuild(){
+			var container = document.getElementById('content');
+			
+			return vom.add(container, vom.create('div',{
+				id:'main'
+			})); 
+		}
+
+		private new_view: object;
+		private stored_data: object = {};
+
+		constructor(data: object){			
+			
+			super();					
+			this.new_view = data as object;
+		}
+
+		render_back(){
+		
+			//alert(0);
+			console.log(history.state);
+			
+			for(let key in history.state) {
+				
+				var field=document.getElementById(key.toLowerCase());
+				var view = history.state[key];			
+				
+				if (typeof view == "string") 
+					
+					field[this.property(field, view)] = view;
+					
+				else if (typeof view == "object")
+				{
+					for (let k in view) 
+					{
+	
+						if (k.startsWith('on')) field.setAttribute(k, view[k]);
+						else 
+							field[k] = view[k];
+					}
+				}			
+			}		
+			
+		}	
+
+		render (){
+
+			for (let key in this.new_view) this.render_field(key, this.new_view[key]);
+			
+			return this;
+		}
+
+		create_stored_page_and_go (to_url : string){
+		
+			if (this.stored_data){
+
+				history.replaceState(this.stored_data, null, document.location.pathname);				
+				history.pushState(null, null, to_url);			
+			}
+			else 
+				new Error('stored_data is not defined. Call `render` first');
+			
+			return this.stored_data;
+		}
+
+
+		/*! Render certain/definite fielt for view	
+			Ищет эелемент key на странице и заполняет его view
+		*/
+		render_field(key:string, view: string){
+			
+			var field=null;
+			
+			if (key[0] == '<')
+			{
+				let cfield = dom.obj(key.slice(1).toLowerCase());
+
+				field = vom.parent_container(cfield);
+			}
+			else
+				field =document.getElementById(key.toLowerCase());
+			
+			
+			if (!field) 
+				console.log('rebiuld_container on server');
+			
+			if (!field && /link\*/.test(key)){
+				
+				var views = view.split(' ');
+				var i=1;while(i<views.length){
+					
+					var istyle = document.createElement('link');
+					istyle.href = views[0] + views[i++] + '.css';
+					istyle.rel = "stylesheet";
+					document.head.appendChild(istyle);	
+				}
+				
+				return;
+				
+			}
+			else if (!field && key.startsWith('dynamic_c')){
+				//если не найден скрипт
+				
+				if (dom.obj(key)) return;
+
+				var script = document.createElement('script');
+
+				//if (key.indexOf('in_head') < 0)
+				{
+
+					script.src = view;
+					script.type = "text/javascript";
+				
+				}
+				//else script.innerText = view;
+				
+				
+				script.id = key;
+				document.head.appendChild(script);		
+				
+				return;
+				
+			}
+			else if (typeof view == "string")
+			{	
+				
+				var attr = this.property(field, view);
+							
+				this.stored_data[key] = field[attr]; 
+				
+				field[attr] = view;
+				
+				
+				if (attr=='innerHTML') 
+					this._containers.push(field);
+					// здесь, по идее, можно еще eval(<script>), но это плохой стиль. Пока откажусь
+				
+			} 
+			else if (typeof view == "object"){
+				
+				this.stored_data[key] = {};
+				for (let k in view as String) 
+				{
+					if (1+['object','function'].indexOf(typeof field[k]))
+					{
+						this.stored_data[key][k]=field.getAttribute(k);
+					} else this.stored_data[key][k]=field[k];
+					
+					if (k.search(/^(on|data-)/) == 0)
+					{
+						field.setAttribute(k, view[k]);
+					} 
+					else 
+						field[k] = view[k];
+				}
+			}
+			
+			
+			
+			else{
+				console.log('not find field for key - ' + key);
+			}
+			
+			
+		};		
+			
+		routers_initialize (func: (elem: HTMLElement) => void)
+		{
+			
+			if (!vom.spa)  vom.spa = true; 
+			
+			for(var i=0;i<this._containers.length;i++) func(
+				this._containers[i]
+			);
+		}		
+	
+	}
+}
 
 
 /*!
 
 
 */
-Viewer.prototype = abstract_viewer;
-function Viewer(data){
+Viewer.prototype = AbstractViewer;
+export function Viewer(data: object){
 	
 	this._containers = [];											//элементы для reInit
 
@@ -194,10 +414,7 @@ function Viewer(data){
 	*/
 	this.render = function(){
 
-		for (let key in new_view)
-		{
-			this.render_field(key, new_view[key]);
-		}
+		for (let key in new_view) this.render_field(key, new_view[key]);
 		
 		return this;
 	}
@@ -349,7 +566,7 @@ function Viewer(data){
 	}
 	
 	var stored_data = {};
-	var new_view = data;
+	var new_view = data as object;
 }
 
 
@@ -358,58 +575,13 @@ function Viewer(data){
 
 
 
-/*! 
-	функции инициализации фрагментов
-*/
-vom.spa = false;
-
-
-
-vom.add = function(container : string| HTMLElement, elem:string|HTMLElement, cls?:string):HTMLElement
-{
-	if (typeof container == 'string') container = document.querySelector(container) as HTMLElement;
-	
-	if (typeof elem == 'string'){
-		
-		elem = document.createElement(elem);
-		if (cls) elem.className = cls;
-		
-	}
-	
-	container.appendChild(elem);
-	
-	return elem;		
-};
-
-vom.create = function(tagname: string, attrs: object):HTMLElement{
-	var elem = document.createElement(tagname);
-	for (var attr in attrs){
-		elem[attr]=attrs[attr];
-	}
-	return elem;
-}
-
-/*!
-	Ищет родительский контейнер. Как вариант еще добавить поиск по атрибуту data-_refresh
-*/
-vom.parent_container = function(cfield:HTMLElement){
-	
-	var _root = cfield.parentElement;
-	
-	if (_root.id) {
-		
-		return _root;
-	}		
-	else 
-		return vom.parent_container(_root);
-
-}
 
 
 /*!
 	Собирает данные со страницы для анимации во время
-	подгрузки данных с сервера и их рендеринга
+	подгрузки данных с сервера и их рендеринга	
 */
 function preview_loader(){
 	
+	//TODO
 }
