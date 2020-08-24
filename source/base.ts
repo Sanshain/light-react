@@ -1,6 +1,6 @@
-import { dom } from "./common";
 
-
+import { dom, Elem } from "./common";
+import {fragment_refresh} from "./snippet";
 
 namespace om{
 
@@ -8,10 +8,11 @@ namespace om{
 	export type Extension = {	
 	
 		spa?: boolean;
-		reInit? : Function;
-		
+
+		reInit? : (elem: HTMLElement) => void;
+
 		add? : (container : string| HTMLElement, elem:string|HTMLElement, cls?:string) => HTMLElement;
-		create? : (tagname: string, attrs: object) => HTMLElement;
+		create? : (tagname: string, attrs: object) => HTMLElement;		
 		parent_container? : (cfield:HTMLElement) => HTMLElement;
 	};//*/
 	
@@ -44,66 +45,74 @@ namespace om{
 		}
 		return elem;
 	}
-
-	/*!
-		Ищет родительский контейнер. Как вариант еще добавить поиск по атрибуту data-_refresh
-	*/
-	vom.parent_container = function(cfield:HTMLElement){
+		
+	/**
+	 * Ищет родительский контейнер с заданным id. 
+	 * Как вариант еще добавить поиск по атрибуту data-_refresh	
+	 * @param cfield 
+	 */
+	vom.parent_container = function(cfield: HTMLElement){
 		
 		var _root = cfield.parentElement;
 		
-		if (_root.id) {
-			
-			return _root;
-		}		
+		if (_root.id) return _root;
 		else 
 			return vom.parent_container(_root);
 
+	}	
+
+	vom.reInit = function(elem: HTMLElement){
+
+		var routes = (elem || document).querySelectorAll('[data-_refresh]') as NodeListOf<HTMLElement>;
+		
+		for (var way in routes){
+			if (!routes[way].onclick){
+				
+				routes[way].onclick = fragment_refresh;
+			}			
+		}
+		
+		/* setTimeout(function(){			
+			var activeElem = (elem || document).querySelector('[autofocus]');			
+			//if (activeElem) activeElem.focus();			
+		}, 1000);//*/			
 	}
+
 }
 
 
-export var vom: ((elem : HTMLElement) => {state? : string}) & om.Extension = function(elem){
+type StateObject = {state? : string, elem: HTMLElement, kernel?: HTMLElement};
+/** Возвращает объект с состоянием элемента
+ * 
+ * @param elem 
+ */
+export var vom: ((elem : HTMLElement) => {state? : string, elem: HTMLElement}) & om.Extension = function(elem){
 
-	var robj: {state? : string} = {};
+	var robj: {state? : string, elem: HTMLElement} = {elem: elem};
 	
-	var _state = function(){
-		var r = elem.getAttribute('data-state');
+	var _state = function(container?: HTMLElement, deep: number = 3){
 		
-		if (!r){
-			
-			/* for recursive:
-			
-			var rec = function(container, deep){
-				
-				var rc = container.firstElementChild;
-				if (rc) r = rc.id || 
-				(
-					rc.className ? 
-					rc.className.split(' ')[0] : 
-					null
-				);
-				else return null;				
-			}//*/
-			
-			var rc = elem.firstElementChild;
-			if (rc) r = 
-				rc.getAttribute('data-state') || rc.id || 
-				(
-					rc.className ? 
-					rc.className.split(' ')[0] : 
-					null
-				);							
-				
-			else return null;
+		if (deep === 0) return null;
+
+		container = container || robj.elem;				
+		var state = container.getAttribute('data-state');
+		
+		if (!state){			// for recursive:
+						
+			var rc = container.firstElementChild as HTMLElement;
+			if (rc) state = rc.getAttribute('data-state') || rc.id || rc.className 
+				? rc.className.split(' ')[0] 
+				: _state(rc, deep - 1)														
+			else 
+				return null;
 		}
-		return r;
+		return state;
 	}
 	
 	
-	if (window.atob) Object.defineProperty(robj, 'state', {get: _state})	;
+	if (window.atob) Object.defineProperty(robj, 'state', { get: _state})	;
 	else 		
-		robj.state = _state();
+		robj.state = _state(elem);
 	
 	return robj;
 }
@@ -170,218 +179,28 @@ class AbstractViewer {
 
 	Рендерит поля страницы на основе входных данных
 */
-
-namespace irt{
-
-	export class Viewer extends AbstractViewer{
-		
-		private _containers: HTMLElement[] = [];
-		private __container_rebuild(){
-			var container = document.getElementById('content');
-			
-			return vom.add(container, vom.create('div',{
-				id:'main'
-			})); 
-		}
-
-		private new_view: object;
-		private stored_data: object = {};
-
-		constructor(data: object){			
-			
-			super();					
-			this.new_view = data as object;
-		}
-
-		render_back(){
-		
-			//alert(0);
-			console.log(history.state);
-			
-			for(let key in history.state) {
-				
-				var field=document.getElementById(key.toLowerCase());
-				var view = history.state[key];			
-				
-				if (typeof view == "string") 
-					
-					field[this.property(field, view)] = view;
-					
-				else if (typeof view == "object")
-				{
-					for (let k in view) 
-					{
+export class Viewer extends AbstractViewer{
 	
-						if (k.startsWith('on')) field.setAttribute(k, view[k]);
-						else 
-							field[k] = view[k];
-					}
-				}			
-			}		
-			
-		}	
-
-		render (){
-
-			for (let key in this.new_view) this.render_field(key, this.new_view[key]);
-			
-			return this;
-		}
-
-		create_stored_page_and_go (to_url : string){
-		
-			if (this.stored_data){
-
-				history.replaceState(this.stored_data, null, document.location.pathname);				
-				history.pushState(null, null, to_url);			
-			}
-			else 
-				new Error('stored_data is not defined. Call `render` first');
-			
-			return this.stored_data;
-		}
-
-
-		/*! Render certain/definite fielt for view	
-			Ищет эелемент key на странице и заполняет его view
-		*/
-		render_field(key:string, view: string){
-			
-			var field=null;
-			
-			if (key[0] == '<')
-			{
-				let cfield = dom.obj(key.slice(1).toLowerCase());
-
-				field = vom.parent_container(cfield);
-			}
-			else
-				field =document.getElementById(key.toLowerCase());
-			
-			
-			if (!field) 
-				console.log('rebiuld_container on server');
-			
-			if (!field && /link\*/.test(key)){
-				
-				var views = view.split(' ');
-				var i=1;while(i<views.length){
-					
-					var istyle = document.createElement('link');
-					istyle.href = views[0] + views[i++] + '.css';
-					istyle.rel = "stylesheet";
-					document.head.appendChild(istyle);	
-				}
-				
-				return;
-				
-			}
-			else if (!field && key.startsWith('dynamic_c')){
-				//если не найден скрипт
-				
-				if (dom.obj(key)) return;
-
-				var script = document.createElement('script');
-
-				//if (key.indexOf('in_head') < 0)
-				{
-
-					script.src = view;
-					script.type = "text/javascript";
-				
-				}
-				//else script.innerText = view;
-				
-				
-				script.id = key;
-				document.head.appendChild(script);		
-				
-				return;
-				
-			}
-			else if (typeof view == "string")
-			{	
-				
-				var attr = this.property(field, view);
-							
-				this.stored_data[key] = field[attr]; 
-				
-				field[attr] = view;
-				
-				
-				if (attr=='innerHTML') 
-					this._containers.push(field);
-					// здесь, по идее, можно еще eval(<script>), но это плохой стиль. Пока откажусь
-				
-			} 
-			else if (typeof view == "object"){
-				
-				this.stored_data[key] = {};
-				for (let k in view as String) 
-				{
-					if (1+['object','function'].indexOf(typeof field[k]))
-					{
-						this.stored_data[key][k]=field.getAttribute(k);
-					} else this.stored_data[key][k]=field[k];
-					
-					if (k.search(/^(on|data-)/) == 0)
-					{
-						field.setAttribute(k, view[k]);
-					} 
-					else 
-						field[k] = view[k];
-				}
-			}
-			
-			
-			
-			else{
-				console.log('not find field for key - ' + key);
-			}
-			
-			
-		};		
-			
-		routers_initialize (func: (elem: HTMLElement) => void)
-		{
-			
-			if (!vom.spa)  vom.spa = true; 
-			
-			for(var i=0;i<this._containers.length;i++) func(
-				this._containers[i]
-			);
-		}		
-	
-	}
-}
-
-
-/*!
-
-
-*/
-Viewer.prototype = AbstractViewer;
-export function Viewer(data: object){
-	
-	this._containers = [];											//элементы для reInit
-
-	this.__container_rebuild = function(){ /**/
+	private _containers: HTMLElement[] = [];
+	private __container_rebuild(){
 		var container = document.getElementById('content');
 		
 		return vom.add(container, vom.create('div',{
 			id:'main'
 		})); 
 	}
-	
-	/*! render part of page from history.state...
-	when user back transfer 
-	
-		Рендерит при возврате назад на основе history.state
+
+	private new_view: object;
+	private stored_data: object = {};
+
+	constructor(data: object){			
 		
-		(в отличие от render+render_field не сохраняет историю)
-	*/
-	this.render_back = function(){
-		
+		super();					
+		this.new_view = data as object;
+	}
+
+	render_back(){
+	
 		//alert(0);
 		console.log(history.state);
 		
@@ -407,155 +226,129 @@ export function Viewer(data: object){
 		}		
 		
 	}	
-	
-	/*! render part of page vs history.state saving...
-	
-		Ключевой метод этого класса
-	*/
-	this.render = function(){
 
-		for (let key in new_view) this.render_field(key, new_view[key]);
+	public render (){
+
+		for (let key in this.new_view) this.render_field(key, this.new_view[key]);
 		
 		return this;
 	}
-	
-	/*!	Save history.state before setting/going to next view
-	
-		@brief create_stored_page_and_go
-	*/
-	this.create_stored_page_and_go = function(to_url){
-		
-		if (stored_data){
-			history.replaceState(stored_data,null,document.location.pathname);
-			
+
+
+	public create_stored_page_and_go (to_url : string){		
+
+		if (this.stored_data){
+
+			history.replaceState(this.stored_data, null, document.location.pathname);				
 			history.pushState(null, null, to_url);			
-		}else 
+		}
+		else 
 			new Error('stored_data is not defined. Call `render` first');
 		
-		return stored_data;
+		return this.stored_data;
 	}
 
-	
-	/*! Render certain/definite fielt for view
-	
-		Ищет эелемент key на странице и заполняет его view
-	*/
-	this.render_field = function(key:string, view: string){
-		
-		var field=null;
-		
-		if (key[0] == '<')
-		{
-			let cfield = dom.obj(key.slice(1).toLowerCase());
 
-			field = vom.parent_container(cfield);
-		}
-		else
-			field =document.getElementById(key.toLowerCase());
+
+	/**
+	 * Render certain field 
+	 * Ищет элемент key на странице и заполняет его содержимым
+	 * @param key - специально сформированная строка, содержащая id элемента, который нужно отрендерить
+	 * @param view - новое содержимое элемента
+	 * @param component - элемент, куда должен быть размещен описательный тег при создании
+	 */
+	private render_field(key: string, view: string, component?: HTMLElement): void{
 		
+		var field: HTMLElement = this.find_field(key);					// находим component	
 		
-		if (!field) 
-			console.log('rebiuld_container on server');
-		
-		if (!field && /link\*/.test(key)){
+		//#if DEBUG
+			if (!field) console.log('Component not found and must be recreated');
+		//#endif
+
+		if (!field){	// если компонент не найден, но ключ содержит одну из метод создания
 			
-			var views = view.split(' ');
-			var i=1;while(i<views.length){
-				
-				var istyle = document.createElement('link');
-				istyle.href = views[0] + views[i++] + '.css';
-				istyle.rel = "stylesheet";
-				document.head.appendChild(istyle);	
+			if (/link\*/.test(key)) this.__createLinks(view, component);	// это для тега <link>
+			else if (key.startsWith('dynamic_c')){						// это для тега <script>
+
+				if (dom.elem(key)) return;
+
+				let script = Elem("script", "").vs({src : view, type: "text/javascript", id: key});
+				(component || document.head).appendChild(script);					
 			}
-			
-			return;
-			
 		}
-		else if (!field && key.startsWith('dynamic_c')){
-			//если не найден скрипт
+		else if(field){
 			
-			if (dom.obj(key)) return;
+			if(typeof view == "string"){
 
-			var script = document.createElement('script');
-
-			//if (key.indexOf('in_head') < 0)
-			{
-
-				script.src = view;
-				script.type = "text/javascript";
-			
+				var attr = this.property(field, view);						
+				this.stored_data[key] = field[attr]; 			
+				field[attr] = view;
+							
+				if (attr=='innerHTML') this._containers.push(field);				
 			}
-			//else script.innerText = view;
-			
-			
-			script.id = key;
-			document.head.appendChild(script);		
-			
-			return;
-			
-		}
-		else if (typeof view == "string")
-		{	
-			
-			var attr = this.property(field, view);
-			
-			stored_data[key] = field[attr]; 
-			
-			field[attr] = view;
-			
-			
-			if (attr=='innerHTML') 
-				this._containers.push(field);
-				// здесь, по идее, можно еще eval(<script>), но это плохой стиль. Пока откажусь
-			
-		} 
-		else if (typeof view == "object"){
-			
-			stored_data[key] = {};
-			for (let k in view as String) 
-			{
-				if (1+['object','function'].indexOf(typeof field[k]))
+			else if(typeof view == "object"){
+
+				this.stored_data[key] = {};
+				for (let k in view as String) 
 				{
-					stored_data[key][k]=field.getAttribute(k);
-				} else stored_data[key][k]=field[k];
-				
-				if (k.search(/^(on|data-)/) == 0)
-				{
-					field.setAttribute(k, view[k]);
-				} 
-				else 
-					field[k] = view[k];
+					if (1+['object','function'].indexOf(typeof field[k]))
+					{
+						this.stored_data[key][k]=field.getAttribute(k);
+					} else this.stored_data[key][k]=field[k];
+					
+					if (k.search(/^(on|data-)/) == 0)
+					{
+						field.setAttribute(k, view[k]);
+					} 
+					else 
+						field[k] = view[k];
+				}				
 			}
 		}
-		
-		
-		
-		else{
-			console.log('not find field for key - ' + key);
-		}
-		
-		
+		//#if DEBUG
+		else throw new Error('unexpected field on key = ' + key)		
+		//#endif
+
 	};		
 	
-	/*! Get or find property_name for replacement its value
-		
-		Имя свойства для переопределения может быть разное. Эта функция определяет его для каждого конкретного элемента
-	*/	
-	var property = function(field, view){
-		//don't chanage the order src and href for ie support:
-		var i=-1; var attr = ''; var attrs = [
-			'src',
-			'href',
-			view.trim().startsWith('<')?'innerHTML':'innerText'
-		];
-					
-		while(!(field[ attr=attrs[++i] ])) if (i>1) break;	
+	/**  Создает теги link и помещает их в "голову" документа
+	 * 
+	 * @param view - содержимое href в формате "<path> <filename> <filename> ..."
+	 * для генерации тегов <link>. Наример для "style/ 1 2" будут сгенерированы:
+	 * 
+	 * <link href="style/1.css" rel="stylesheet"></link>
+	 * <link href="style/2.css" rel="stylesheet"></link>
+	 */
+	private __createLinks(view: string, component?: HTMLElement) {		
 
-		return attr;		
-	};	//*/
-	
-	
-	this.routers_initialize = function(func)
+		var views: string[] = view.split(' '), i = 1; 
+
+		while (i < views.length) {
+
+			var istyle = Elem('link','').vs({
+				href: views[0] + views[i++] + '.css',
+				rel : "stylesheet"});
+
+			(component || document.head).appendChild(istyle);
+		}
+	}
+
+
+
+	private find_field(key: string) {
+		var field: HTMLElement = null;
+
+		if (key[0] == '<') { // если присутствует ключ контейнера,
+
+			let cfield = dom.elem(key.slice(1).toLowerCase());
+			field = vom.parent_container(cfield); // то ищем компонент-контейнер;
+		}
+		else
+			field = document.getElementById(key.toLowerCase()); // иначе просто берем компонент.
+		return field;
+	}
+
+	routers_initialize (func: (elem: HTMLElement) => void)
 	{
 		
 		if (!vom.spa)  vom.spa = true; 
@@ -563,11 +356,12 @@ export function Viewer(data: object){
 		for(var i=0;i<this._containers.length;i++) func(
 			this._containers[i]
 		);
-	}
-	
-	var stored_data = {};
-	var new_view = data as object;
+	}		
+
 }
+
+
+
 
 
 //vom = {};

@@ -142,14 +142,15 @@ interface ContentTypes {
 	"application/x-www-form-urlencoded": string;
 }
 
-class Ajax{
+export class Ajax{
 
 	url: string;
 	csrftoken: string;
 	func: Function;							// функция принятия ответа
 	contentType? : keyof ContentTypes;
 	multipartJSON : boolean;
-		
+	public onfail: Function;
+	public set_url: urlString;
 
 	constructor(url?: string, func?: Function, csrftoken?: string){
 				
@@ -183,9 +184,9 @@ class Ajax{
 						
 		}
 		else
-			xhr.setRequestHeader('Content-Type', ENCTYPE);		// 3. Устанавливаем заголовк ENCTYPE				
-		
-		
+			xhr.setRequestHeader('Content-Type', ENCTYPE);		// 3. Устанавливаем заголовк ENCTYPE
+
+		var self = this;
 		xhr.onreadystatechange = function() {					// получаем результат				
 					
 			if (this['status']){										//для ie8
@@ -197,7 +198,7 @@ class Ajax{
 					if (this.readyState == 4) {
 
 						alert(warnLog + xhr.statusText + ' в статусе ' + this.readyState);	
-						if (this.onfail) this.onfail();
+						if (self.onfail) self.onfail();
 					}		
 
 					return;

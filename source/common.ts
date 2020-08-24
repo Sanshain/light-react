@@ -2,13 +2,13 @@ import { vom } from "./base";
 
 
 type Dom = Document & { 
-	obj?: (elementId: string) => HTMLElement | null;
+	elem?: (elementId: string) => HTMLElement | null;
 	get?: <K extends keyof HTMLElementTagNameMap>(selectors: K) => HTMLElementTagNameMap[K] | null;
 };
 
 // export var dom = {...window.document, obj: document.getElementById, get: document.querySelector};
 export var dom: Dom = window.document;
-dom.obj = document.getElementById;
+dom.elem = document.getElementById;
 dom.get = document.querySelector;
 
 export var loc = document.location;
@@ -27,9 +27,6 @@ declare global{
 	interface DOMTokenList{
 		Toggle(old: String, recent: String): void;
 	}
-	interface XMLHttpRequest{
-		onfail(): void;
-	}
 }
 
 HTMLLIElement.prototype.appendChilds = function () {
@@ -42,19 +39,6 @@ HTMLLIElement.prototype.appendChilds = function () {
 
 
 
-
-/*!
-	 class
-	
-*/
-HTMLElement.prototype.vs = function (dict) {
-
-	for (var key in dict){
-		this.setAttribute(key, dict[key]);
-	}
-
-	return this;
-};
 
 
 
@@ -77,25 +61,15 @@ DOMTokenList.prototype.Toggle = function(old, recent){
 	var acts = [this.remove, this.add];
 
 	for (var i=0;i<acts.length;i++) {
-	
-	
-		if (typeof arguments[i] == "string") {
-
-			acts[i](arguments[i]);			
-		} 
-		else if (Array.isArray(arguments[i])) {
-
-			for (var j=0;j< arguments[i].length;j++) {
-
-				acts[i](arguments[i][j]);
-			}			
+		
+		if (typeof arguments[i] == "string") acts[i](arguments[i]);
+		else if (Array.isArray(arguments[i])) 
+		{
+			for (var j=0;j< arguments[i].length;j++) acts[i](arguments[i][j]);
 		} 
 		else {
-	
-			throw new 
-			   Error("Unexpected type param " + arguments[i]);			
+			throw new Error("Unexpected type param " + arguments[i]);			
 		}
-
 	}
 		
 }
@@ -136,7 +110,7 @@ function get_maxim(enumble, field_in){ //get_maximum
 
 	\required ie10+
 */
-function search_fixed(container : HTMLElement, deep : number){
+export function search_fixed(container : HTMLElement, deep? : number){
 	
 	if (deep == 0) return null;
 	else 
@@ -186,11 +160,17 @@ function get_scroll_wide(elem){
 }
 
 
+type TName = HTMLElementTagNameMap;
 
-/*!
-	 css
-*/
-function Elem(type_name: keyof HTMLElementTagNameMap, txt: string, css_cls: string){		
+/** Создает HTML-элемент
+ * 
+ * @param type_name 
+ * @param txt 
+ * @param css_cls 
+ */
+//export function Elem<tag extends keyof TName>(type_name: tag, txt: string, css_cls?: string): TName[tag]{			
+export function Elem(type_name: keyof HTMLElementTagNameMap, txt: string, css_cls?: string){			
+
 	var elem = document.createElement(type_name);	
 	elem.innerText = txt;	//value
 	
@@ -201,4 +181,14 @@ function Elem(type_name: keyof HTMLElementTagNameMap, txt: string, css_cls: stri
 	return elem;	
 }
 
+
+
+HTMLElement.prototype.vs = function (dict: object) {
+
+	for (var key in dict){
+		this.setAttribute(key, dict[key]);
+	}
+
+	return this;
+};
 
