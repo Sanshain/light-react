@@ -111,6 +111,9 @@ namespace irl{
 
 	export class RefreshManager{
 		
+		/**
+		 * списко id блоков для запроса 
+		 */
 		aim_blocks:string[];			
 		private e_target : HTMLElement;
 		
@@ -125,32 +128,74 @@ namespace irl{
 
 		constructor(e: Event, _root_elem?: string){
 
-			this.root_elem = _root_elem || 'content';
+			this.aim_blocks = [];			 
+
+			/* блок инициализации: */
+			this.root_elem = _root_elem || 'content';							//obsolete			
+
+			this.e_target = e.currentTarget as HTMLElement;								
+			this.unique_templates = this.e_target.dataset['_refresh'].replace(/[\s]+/,'').split(',');								
+						
+			
+			/* блок выполнения: */			
+			for (var key in this.unique_templates){
+				
+				this.package_animate(this.unique_templates[key]);
+			}
+
+			this.nec_blocks = this.requested_blocks_by_require();
+
+			// не уверен, что нужна очистка. Поставил заглушку (307 error)
+
+			//внутри этих блоков проверяем и удаляем лишние элементы:
+			/* 
+			//вроде как это реализовано в requested_blocks_by_require
+			
+			for(var key in nec_blocks){
+				
+				var contnr = nec_blocks[key].querySelector(
+					'[data-state]'
+				);
+				contnr.innerHTML = '';
+				
+			}//*/
+			
+
+			//var blocks = aim_blocks.concat(nec_blocks);			
+
 		}
 
+		/**
+		 * @description
+		 * генерирует список элементов, необходимых для отрисовки страницы по результатам запроса,
+		 * а так же заносит список их id в **aim_blocks** для запроса на сервер
+		 * 
+		 * @param block_name - строка с картой элементов, которую необходимо построить по результатам запроса
+		 * @returns список элементов, необходмых для отрисовки страницы (либо один элемент)
+		 */
 		get_boxes(block_name: mapString): (NodeListOf<HTMLElement> | HTMLElement[]) | HTMLElement {
 
 					
-			var details: string[] = block_name.split(">");
+			var blockTree: string[] = block_name.split(">");
 			var _box: HTMLElement = null;
 			var _lazy_box: string = null;
 			
-			if (details[0][0]=='<') {
+			if (blockTree[0][0]=='<') {
 										
-				var _source_elem = dom.elem((_lazy_box = details[0]).slice(1));				//doc.get
+				var _source_elem = dom.elem((_lazy_box = blockTree[0]).slice(1));				//doc.get
 				_box = vom.parent_container(_source_elem);
 			}
 			else 
-				_box = document.getElementById(details[0]);
+				_box = document.getElementById(blockTree[0]);
 			
 			if (!_box) throw new Error('root element is not fount');
 			
 			var _boxes: NodeListOf<HTMLElement> | HTMLElement[] = []; 		// боксы для анимации
 			
 		
-			if (details[1]){
+			if (blockTree[1]){									// если задан родительский контейнер через >
 		
-				var signs = details[1].split('.');				
+				var signs = blockTree[1].split('.');				
 				var sign = signs.indexOf('*');
 								
 				if (sign==0){									//если не заданы одноуровневые поля
@@ -179,7 +224,7 @@ namespace irl{
 						//значит надо обновить корневой элемент: ничего не делаем
 					}					
 				}				
-				else{
+				else{ 											// w/o `*`
 
 					//если нет обощителя, значит ищем каждый указанный элемент
 					for(var key in signs)
@@ -193,7 +238,8 @@ namespace irl{
 						else{
 							
 							(_boxes as HTMLElement[]).push(_box);
-							this.aim_blocks.push(details[0]);break;											
+							this.aim_blocks.push(blockTree[0]);
+							break;											
 						}
 					}								
 				}		
@@ -246,33 +292,35 @@ namespace irl{
 			
 		private checkRequire(currentBlock: string) {			
 
-			var tree: string[] = currentBlock.split('>'); // отделяем корневой компонент от подэлементов
-			var blockDetail: string[] = tree.shift().split(/[\~\|]/); // отделяет название элемента от его состояния
-			var r_blockId: string = blockDetail.pop(); //извлекаем id элемента			
+			var blocksTree: string[] = currentBlock.split('>'); // отделяем корневой компонент от подэлементов
+			var rootBlockDetail: string[] = blocksTree.shift().split(/[\~\|]/); // отделяет название элемента от его состояния
+			var rootBlockId: string = rootBlockDetail.pop(); //извлекаем id элемента			
 
-			var requireBlock: HTMLElement = dom.elem(r_blockId);			// получаем сам элемент
-			var blockState = blockDetail.length ? blockDetail.pop() : '';	// извлекаем целевое состояние элемента
+			var requireBlock: HTMLElement = dom.elem(rootBlockId);			// получаем сам элемент
+			var blockState = rootBlockDetail.length ? rootBlockDetail.pop() : '';	// извлекаем целевое состояние элемента
 			var state = (requireBlock && blockState) ? vom(requireBlock).state : ''; // извлекаем текущее состояние
 
 			//есть requiredBlock и blockState:
-			//для выполнения условия requiredBlock должен быть thruthy, а state==blockState. Если нет - делаем запрос
-			if (blockState && (blockState != state)) this.nec_blocks.push(r_blockId + '|' + blockState);
+			//для выполнения условия requiredBlock должен быть thruthy, а state==blockState. 
+			// Если не выполянется - добавляем в список для запроса:
+			if (blockState && (blockState != state)) this.nec_blocks.push(rootBlockId + '|' + blockState);
 			else if (!requireBlock || requireBlock.children.length == 0) {
 
-				this.nec_blocks.push(r_blockId);
+				this.nec_blocks.push(rootBlockId);
 			}
-			else { //здесь надо проверить под_элемент:					
+			else { 				// если выполняется, значит надо проверить под_элемент:					
 
-				let subElems: string[] = tree.pop().split('.')
-				if (!subElems){
+				let subElems: string[] = blocksTree.pop().split('.')
+				if (!subElems){								// если подэлементы не прудсмотрены
 
+					throw new Error('307: Не указаны подэлементы для корневого элемента с id ' + rootBlockId)
 				}
 				else for(let subb_id of subElems) {
 
 					let elem = dom.elem(subb_id);
 					if (!elem){
 
-						this.nec_blocks.push(r_blockId); break;
+						this.nec_blocks.push(rootBlockId); break;
 					}
 
 					if (dom.elem(subb_id)?.children.length == 0) this.nec_blocks.push(subb_id);					
@@ -370,7 +418,10 @@ namespace irl{
 			}, (Leaser || {}).responseTime || 700);
 		}	
 
-
+		/**
+		 * 
+		 * @param block_name 
+		 */
 		package_animate (block_name: string){
 			
 			var _boxes = this.get_boxes(block_name);
