@@ -4,7 +4,12 @@ export {FormData} from "./native_dom.d"
 
 
 
-
+declare global{
+	/**
+	 * содержит атрибут name
+	 */
+	type HTMLRouteElement = HTMLAnchorElement | HTMLButtonElement | HTMLInputElement; // (HTMLFormElement)
+}
 
 export function isIe(): boolean {
     //@ts-ignore

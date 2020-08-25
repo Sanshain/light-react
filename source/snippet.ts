@@ -39,12 +39,6 @@ export function fragmentRefresh(event: Event){
 }	
 
 
-/*!
-	
-*/
-type HTMLRouteElement = HTMLAnchorElement | HTMLButtonElement | HTMLInputElement; // (HTMLFormElement)
-
-
 /**
  * Управляет формированием списков блоков (*up_elems* и *nec_blocks*) 
  * для запроса на сервер и их анимацией на время ожидания ответа
@@ -56,10 +50,12 @@ export class RefreshManager{
 	/**
 	 * Считывает и формирует ссылку для запроса на сервер и для перехода (это не обязательно одна и та же)
 	 * 
-	 * - Адрес для навигации (переход) берется из атрибута *formAction* кнопки либо формируется из аттрибута
-	 * `name` ссылки. Так же может быть задан через атриубут *data-to* любого тега
 	 * 
-	 * - Адрес запроса - из атрибута href ссылки
+	 * - Адрес для навигации (перехода) - берется из атрибута *formAction* кнопки либо формируется из 
+	 * аттрибута `href` ссылки
+	 * 
+	 * - Адрес запроса - из атрибута `name` ссылки или кнопки либо атрибута data-to. 
+	 * Если эти атрибуты пусты, то адрес для запроса совпадает с адресом для навигации (либо заменяет его)
 	 * 
 	 * @param event - expected event object, в контексте которого происходит вызов
 	 */
@@ -73,13 +69,12 @@ export class RefreshManager{
 		 * @returns ссылку для запроса на сервер
 		 */
 		//:ie8+
-		var data_to___get: (elem: HTMLElement, deep: number) => UrlString|false = function(elem, deep){
+		var data_to___get: (elem: HTMLElement, deep?: number) => UrlString|false = function(elem, deep=0){
 	
 			var dtto = elem.getAttribute('data-to');
 	
 			if (dtto) return dtto;
-			if (!dtto && --deep>0)
-				return data_to___get(elem.parentElement, deep);
+			if (!dtto && (deep--) > 0) return data_to___get(elem.parentElement, deep);
 			else
 				return false;
 		}
@@ -88,49 +83,44 @@ export class RefreshManager{
 				
 	
 		/** Строка (ссылка) для навигации в строке браузера */	
-		var set_url : UrlString = null;
+		var clientUrl : UrlString = null;
 		 /** строка (ссылка) для запроса на сервер 
 		 * - если это ссылка, берем из адреса
 		 * - если нет, то берем из data-to
-		 * @type urlString */	
-		var target: UrlString|false = (e_target as HTMLAnchorElement).href 
+		 * @type urlString */
+		var serverUrl: UrlString|false = e_target.name 				
+			? '/'+ e_target.name.replace('-','/') +'/'			// postUrl берем из атрибута name
+			: data_to___get(e_target, 2);						// если пустой, то - из `data-to` 
+		
+		let _url = (e_target as HTMLAnchorElement).href 
 			? (e_target as HTMLAnchorElement).href.substr(location.origin.length) 
-			: e_target.getAttribute('data-to');
+			: (e_target as (HTMLInputElement|HTMLButtonElement)).formAction;
+
+		if (serverUrl) clientUrl = _url || '';					// если serverUrl задан, назначем clientUrl
+		else 													// если нет, то будет только serverUrl
+			serverUrl = _url;									
 		
+		if (!serverUrl) throw new Error("Leaser can't be initialized w/o `serverUrl` definition");
 	
-		//если есть атрибут name, то адрес запроса на него
-		if (!target && e_target.name) {
-			
-			target = e_target.name ? '/'+e_target.name+'/' : ''; 			
-			set_url = (e_target as HTMLButtonElement).formAction;
-		}
-		
-		//если есть атрибут formAction, берем из атрибута
-		target = target || (e_target as HTMLButtonElement).formAction; // для ie8	
-		target = target || data_to___get(e_target, 3);  //(если e_target == esrcElement), ищем 'to'
-	
-		
-		if (!target) throw new Error("Leaser can't be initialized without target specify");
-	
-		//:ie9- - прямой переход:
-		if (!window.atob) document.location.href= set_url||target;
+		//:ie8+ - прямой переход:
+		if (!window.atob) document.location.href= clientUrl||serverUrl;
 		//:ie10+
 		else {
 			e.preventDefault();										
 			var rManager = new RefreshManager(e);	
-			return rManager.Init(target as UrlString, set_url);			//если нет, кастомизируем
+			return rManager.Init(serverUrl as UrlString, clientUrl);			//если нет, кастомизируем
 		};
 	}
 
 	/**
 	 * 
-	 * @param target - строка (ссылка) для запроса на сервер 
-	 * @param set_url - Строка (ссылка) для навигации в строке браузера
+	 * @param serverUrl - строка (ссылка) для запроса на сервер 
+	 * @param clientUrl - Строка (ссылка) для навигации в строке браузера
 	 */
-	public Init(target: UrlString, set_url: UrlString){
+	public Init(serverUrl: UrlString, clientUrl: UrlString){
 
-		this.target = target;
-		this.set_url = set_url;	
+		this.target = serverUrl;
+		this.clientUrl = clientUrl;	
 		return this;	
 	}
 
@@ -150,7 +140,7 @@ export class RefreshManager{
 	/**
 	 * Строка (ссылка) для навигации в строке браузера
 	 */
-	set_url: UrlString;
+	clientUrl: UrlString;
 
 	/**
 	 * 
@@ -508,7 +498,7 @@ export class RefreshManager{
 			
 		var ajax = new Ajax(this.target, box_onload);
 		
-		ajax.set_url = this.set_url;
+		ajax.set_url = this.clientUrl;
 		ajax.onfail = function(){
 			//#if DEBUG
 			//здесь может быть относительно 

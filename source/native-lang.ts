@@ -35,7 +35,7 @@ declare global{
     /**
      * id HTML-элемента
      */
-    type ElemIdString = string;   
+    type Id = string;   
 }
 
 export var u = {
