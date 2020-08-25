@@ -24,12 +24,14 @@ var Leaser = {
 	},		
 }
 
-
+/** Выполняет частичную перезагрузку страницы
+ * @param event - событие, в контексте которого происходит вызов
+ */
 export function fragment_refresh(event: Event){
 
 	var rm = null;
-	if (rm = RefreshManager.Initialize(event)){
-		
+	if (rm = RefreshManager.Initialize(event))
+	{		
 		rm.Commit();
 	}
 }	

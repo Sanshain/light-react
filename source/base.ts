@@ -119,11 +119,11 @@ export var vom: ((elem : HTMLElement) => {state? : string, elem: HTMLElement}) &
 
 
 
-/*! render for part of page...
-
-	@param data - ответ от сервера (данные для рендеринга)
-	@param url - url для изменения в адресной строке браузера
-*/
+/** render for part of page..
+ * 
+ * @param data - ответ от сервера (данные для рендеринга)
+ * @param url - url для изменения в адресной строке браузера
+ */
 export var render_page = function(data: jsonString, url: string){					
 
 	while(typeof data == "string") data = JSON.parse(data);
@@ -171,14 +171,10 @@ class AbstractViewer {
 // function Renderer(boxes: any){ return render_page; }
 
 
-
-
-						/* class Viewer*/
-
-/*! Class for present new part of page...
-
-	Рендерит поля страницы на основе входных данных
-*/
+/** Class for present new part of page...
+ * 
+ * Рендерит поля страницы на основе входных данных
+ */
 export class Viewer extends AbstractViewer{
 	
 	private _containers: HTMLElement[] = [];
@@ -193,12 +189,19 @@ export class Viewer extends AbstractViewer{
 	private new_view: object;
 	private stored_data: object = {};
 
+	/**
+	 * 
+	 * @param data - содержит id элементов в качестве ключей и их новые представления в качестве значений
+	 */
 	constructor(data: object){			
 		
 		super();					
 		this.new_view = data as object;
 	}
 
+	/**
+	 * Рендер при переходе "назад"
+	 */
 	render_back(){
 	
 		//alert(0);
@@ -227,6 +230,9 @@ export class Viewer extends AbstractViewer{
 		
 	}	
 
+	/**
+	 * Рендер всех полей, указанных в `new_view`
+	 */
 	public render (){
 
 		for (let key in this.new_view) this.render_field(key, this.new_view[key]);
@@ -234,8 +240,11 @@ export class Viewer extends AbstractViewer{
 		return this;
 	}
 
-
-	public create_stored_page_and_go (to_url : string){		
+	/**
+	 * Сохраняет состояния текущих объектов в history и добавляет туда текущий адрес без данных
+	 * @param to_url - ссылка для перехода
+	 */
+	public create_stored_page_and_go (to_url : UrlString){		
 
 		if (this.stored_data){
 
@@ -251,7 +260,8 @@ export class Viewer extends AbstractViewer{
 
 
 	/**
-	 * Render certain field 
+	 * Render certain field:
+	 * 
 	 * Ищет элемент key на странице и заполняет его содержимым
 	 * @param key - специально сформированная строка, содержащая id элемента, который нужно отрендерить
 	 * @param view - новое содержимое элемента
