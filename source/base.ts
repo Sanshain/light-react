@@ -11,7 +11,7 @@ type Extension = {
 
 	spa?: boolean;
 
-	reInit? : (elem: HTMLElement) => void;
+	reInit? : (elem?: HTMLElement) => void;
 
 	add? : (container : string| HTMLElement, elem:string|HTMLElement, cls?:string) => HTMLElement;
 	create? : (tagname: string, attrs: object) => HTMLElement;		

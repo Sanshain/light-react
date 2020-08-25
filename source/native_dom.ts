@@ -1,10 +1,22 @@
 
-import {FormData} from "./native_dom.d"
-export {FormData} from "./native_dom.d"
+// import {FormData} from "./native_dom.d"
+// export {FormData} from "./native_dom.d"
 
 
+export declare var FormData : {
+	new(form?: HTMLFormElement): FormData;
+	prototype: FormData;
+	create: (key: string, value: string) => FormData;
+}
 
 declare global{
+	type Input = HTMLInputElement | HTMLTextAreaElement	
+	/**
+	 * 
+	 */
+	interface HTMLFormElement{
+		extract(data?: object) : object;
+	}	
 	/**
 	 * содержит атрибут name
 	 */
