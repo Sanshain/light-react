@@ -142,18 +142,26 @@ interface ContentTypes {
 	"application/x-www-form-urlencoded": string;
 }
 
+/**
+ * вызывается внутри *refreshManager.Commit()* метода
+ */
 export class Ajax{
 
 	url: string;
 	csrftoken: string;
-	func: Function;							// функция принятия ответа
+	callback: (resp: string, set_url?: UrlString) => void;		// функция принятия ответа
 	contentType? : keyof ContentTypes;
 	multipartJSON : boolean;
 	public onfail: Function;
-	public set_url: urlString;
+	public set_url: UrlString;
 
-	constructor(url?: string, func?: Function, csrftoken?: string){
-				
+	/**
+	 * 
+	 * @param url - адрес ссылки для запроса
+	 * @param callback - каллбэк функция, которая принмает в качестве параметра ответ от сервера
+	 * @param csrftoken - csrftoken
+	 */
+	constructor(url?: string, callback?: (resp: string, set_url?: UrlString) => void, csrftoken?: string){		
 
 		//#if DEBUG
 		if (!isIe()) console.time('server_response_time');	
@@ -161,11 +169,17 @@ export class Ajax{
 
 		this.url = url || document.location.href;			//целевйой урл		
 		this.csrftoken = csrftoken;							// csrftoken-токен
-		this.func = func;									// функция принятия ответа
+		this.callback = callback;									// функция принятия ответа
 		this.contentType = null;				
 	}
 
-	private __post(data: Object|string, func?: Function, url? : string){
+	/**
+	 * 		
+	 * @param data - данные, отправляемые на сервер
+	 * @param func - функция каллбэк
+	 * @param url - url для запроса на сервер
+	 */
+	private __post(data: Object|string, func?: (resp: string, set_url?: UrlString) => void, url? : string){
 				
 		var xhr = new XMLHttpRequest();						// 1. новый объект XMLHttpRequest					
 		xhr.open("POST", url, true);						// 2. Конфигурируем: тип, URL, асинхрон/неасинхронный
@@ -208,7 +222,7 @@ export class Ajax{
 			
 			if(this.readyState == 4 && this.status == 200)
 			{				
-				func(this.responseText, url);					
+				func(this.responseText, self.set_url || url);					
 
 				//#if DEBUG
 				if (!isIe()) console.timeEnd('server_response_time');
@@ -289,7 +303,7 @@ export class Ajax{
 						
 		}		
 		
-		this.__post(data, this.func, this.url);
+		this.__post(data, this.callback, this.url);
 		
 	}
 		
@@ -300,13 +314,13 @@ export class Ajax{
 	
 		@param data - js-объект для конвертации в json для отправки
 	*/
-	postData (data : string|Object, func : Function){
+	postData (data : string|Object, func : (resp: string, set_url?: UrlString) => void){
 		
 		//$("input[name=csrfmiddlewaretoken]").val()
 		data = 'csrfmiddlewaretoken=' + 
 			(this.csrftoken || getCookie('csrftoken')) + '&' + (this['data'] || data);	
 		
-		this.__post(data, this.func || func, this.url);
+		this.__post(data, this.callback || func, this.url);
 	}
 	
 	
@@ -320,7 +334,7 @@ export class Ajax{
 		
 		this.csrftoken = this.csrftoken || getCookie('csrftoken');
 		
-		this.__post(data, this.func, this.url);
+		this.__post(data, this.callback, this.url);
 	}	
 	
 	/*!	
@@ -337,11 +351,11 @@ export class Ajax{
 		FormData (ie10+)		
 		
 	*/
-	post_form (frm : HTMLFormElement, func : Function){		
+	post_form (frm : HTMLFormElement, func : (resp: string, set_url?: UrlString) => void){		
 		
 		var data = this.getdata(frm);
 						
-		this.__post(data, this.func || func, this.url || window.location.href);
+		this.__post(data, this.callback || func, this.url || window.location.href);
 		
 	};	
 

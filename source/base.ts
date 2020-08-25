@@ -1,21 +1,24 @@
 
 import { dom, Elem } from "./common";
-import {fragment_refresh} from "./snippet";
+import {fragmentRefresh} from "./snippet";
 
-namespace om{
 
-	// ((elem : HTMLElement) => {state? : string}) 
-	export type Extension = {	
-	
-		spa?: boolean;
+// ((elem : HTMLElement) => {state? : string}) 
+/**
+ * Тип для vom
+ */
+type Extension = {	
 
-		reInit? : (elem: HTMLElement) => void;
+	spa?: boolean;
 
-		add? : (container : string| HTMLElement, elem:string|HTMLElement, cls?:string) => HTMLElement;
-		create? : (tagname: string, attrs: object) => HTMLElement;		
-		parent_container? : (cfield:HTMLElement) => HTMLElement;
-	};//*/
-	
+	reInit? : (elem: HTMLElement) => void;
+
+	add? : (container : string| HTMLElement, elem:string|HTMLElement, cls?:string) => HTMLElement;
+	create? : (tagname: string, attrs: object) => HTMLElement;		
+	parent_container? : (cfield:HTMLElement) => HTMLElement;
+};//*/
+
+namespace om{	
 
 	/*! 
 		функции инициализации фрагментов
@@ -61,14 +64,18 @@ namespace om{
 
 	}	
 
-	vom.reInit = function(elem: HTMLElement){
+	/** Назначает обработчик события для компонентов навигации
+	 * @static 
+	 * @param elem - элемент-контейнер, внутри которого нужно сделать переинициализацию компонентов навигации
+	 */
+	vom.reInit = function(elem?: HTMLElement){
 
 		var routes = (elem || document).querySelectorAll('[data-_refresh]') as NodeListOf<HTMLElement>;
 		
 		for (var way in routes){
 			if (!routes[way].onclick){
 				
-				routes[way].onclick = fragment_refresh;
+				routes[way].onclick = fragmentRefresh;
 			}			
 		}
 		
@@ -84,9 +91,13 @@ namespace om{
 type StateObject = {state? : string, elem: HTMLElement, kernel?: HTMLElement};
 /** Возвращает объект с состоянием элемента
  * 
- * @param elem 
+ * @param elem - элемент, для которого необходимо определить состояние
+ * @description - **состояние** - это содержимое атрибута *data-state* текущего элемента либо одного из дочерних
+ * [либо (id || class) дочерних]
+ * 
+ * @static - содержит статические методы, в тч *reInit*, который по сути инициализирует всю библу
  */
-export var vom: ((elem : HTMLElement) => {state? : string, elem: HTMLElement}) & om.Extension = function(elem){
+export var vom: ((elem : HTMLElement) => {state? : string, elem: HTMLElement}) & Extension = function(elem){
 
 	var robj: {state? : string, elem: HTMLElement} = {elem: elem};
 	
@@ -121,10 +132,12 @@ export var vom: ((elem : HTMLElement) => {state? : string, elem: HTMLElement}) &
 
 /** render for part of page..
  * 
+ * Рендерит необходимую часть страницы после получения ответа от сервера
+ * (в методе `_await__animate` *RefreshManager*-a)
  * @param data - ответ от сервера (данные для рендеринга)
  * @param url - url для изменения в адресной строке браузера
  */
-export var render_page = function(data: jsonString, url: string){					
+export var renderPage = function(data: jsonString, url: string){					
 
 	while(typeof data == "string") data = JSON.parse(data);
 	
@@ -173,7 +186,8 @@ class AbstractViewer {
 
 /** Class for present new part of page...
  * 
- * Рендерит поля страницы на основе входных данных
+ * Рендерит поля страницы на основе входных данных *data*.
+ * Вызывается внутри *renderPage(data, url)*
  */
 export class Viewer extends AbstractViewer{
 	

@@ -1,6 +1,6 @@
 
 import {dom, search_fixed, loc } from "./common"
-import {vom, render_page} from "./base"
+import {vom, renderPage} from "./base"
 import { Ajax } from "./ajax";
 
 var Leaser = {
@@ -26,8 +26,10 @@ var Leaser = {
 
 /** Выполняет частичную перезагрузку страницы
  * @param event - событие, в контексте которого происходит вызов
+ * 
+ * @see vom.reInit назначает его обработчиком для элементов с атрибутом *_refresh*
  */
-export function fragment_refresh(event: Event){
+export function fragmentRefresh(event: Event){
 
 	var rm = null;
 	if (rm = RefreshManager.Initialize(event))
@@ -46,10 +48,18 @@ type HTMLRouteElement = HTMLAnchorElement | HTMLButtonElement | HTMLInputElement
 /**
  * Управляет формированием списков блоков (*up_elems* и *nec_blocks*) 
  * для запроса на сервер и их анимацией на время ожидания ответа
+ * 
+ * Вызывается внутри *fragmentRefresh()* через статический конструктор *Initialize*
  */
 export class RefreshManager{
 	
 	/**
+	 * Считывает и формирует ссылку для запроса на сервер и для перехода (это не обязательно одна и та же)
+	 * 
+	 * - Адрес для навигации (переход) берется из атрибута *formAction* кнопки либо формируется из аттрибута
+	 * `name` ссылки. Так же может быть задан через атриубут *data-to* любого тега
+	 * 
+	 * - Адрес запроса - из атрибута href ссылки
 	 * 
 	 * @param event - expected event object, в контексте которого происходит вызов
 	 */
@@ -137,6 +147,9 @@ export class RefreshManager{
 
 	nec_blocks: string[];
 	target: string;
+	/**
+	 * Строка (ссылка) для навигации в строке браузера
+	 */
 	set_url: UrlString;
 
 	/**
@@ -420,7 +433,7 @@ export class RefreshManager{
 			
 			if (self.responsed_content){
 
-				render_page(
+				renderPage(
 					self.responsed_content.pop() as string, 
 					self.responsed_content.pop() as string
 				);	
@@ -483,8 +496,12 @@ export class RefreshManager{
 			args = (args as string[]).concat(optional);
 		} 
 		
-		
-		var box_onload = function (resp: string, set_url: UrlString) 		//
+		/**
+		 * каллбэк при ответе сервера
+		 * @param resp - ответ с сервера
+		 * @param set_url - адрес для браузера, который необходимо установить, по получении валидного ответа
+		 */
+		var box_onload:(resp: string, set_url?: UrlString) => void = function (resp, set_url?) 	
 		{
 			this.responsed_content = [this.set_url||set_url, resp];
 		}
