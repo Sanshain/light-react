@@ -1,11 +1,11 @@
 {
-  "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
+  "compilerOptions": {    
+    "sourceMap": true,    
     "removeComments": true,
-    // "watch": true,
+    "target": "es6",
+    "module": "commonjs"  
   },
-  "include": ["./source/**/*"]
+  "include": ["init.ts", "./source/**/*"]
 }
 
 

@@ -4,8 +4,8 @@ import typescript from '@rollup/plugin-typescript';          // https://github.c
 
 export default {
   input: 'init.ts',
-  output: {    
-    file: 'release/*.js',
+  output: {  
+    file: 'release/lib.js',
     format: 'iife'
     // format: 'esm'
   },  

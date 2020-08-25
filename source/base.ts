@@ -133,9 +133,10 @@ export var vom: ((elem : HTMLElement) => {state? : string, elem: HTMLElement}) &
 /** render for part of page..
  * 
  * Рендерит необходимую часть страницы после получения ответа от сервера
- * (в методе `_await__animate` *RefreshManager*-a)
  * @param data - ответ от сервера (данные для рендеринга)
  * @param url - url для изменения в адресной строке браузера
+ * 
+ * @summary Вызывается в методе `_await__animate` *RefreshManager*-a
  */
 export var renderPage = function(data: jsonString, url: string){					
 
