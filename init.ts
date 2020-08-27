@@ -13,8 +13,8 @@ export var config = {
 
 
 import { Ajax } from "./source/ajax";
-import { fragmentRefresh, RefreshManager } from "./source/snippet";
-import { renderPage, Viewer, vom } from "./source/render";
+import { fragmentRefresh, RefreshManager, vom } from "./source/snippet";
+import { renderPage, Viewer } from "./source/render";
 
 vom.init();
 
