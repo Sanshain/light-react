@@ -14,9 +14,7 @@ export var config = {
 
 import { Ajax } from "./source/ajax";
 import { fragmentRefresh, RefreshManager } from "./source/snippet";
-import { renderPage, Viewer } from "./source/render";
-// import { vom } from "./source/base"; //*/
+import { renderPage, Viewer, vom } from "./source/render";
 
-// vom.init()
-lPage.init();
+vom.init();
 
