@@ -1,9 +1,10 @@
 
-var config = {
+export var config = {
 
 }
 
-// vom.reInit ~=> fragmentRefresh => RefreshManager => renderPage => Viewer
+
+// vom.reInit ~=> fragmentRefresh => RefreshManager(vom) => renderPage => Viewer
 //                                     ||              /\             ||      
 //                                     \/              ||             \/
 //                                    Ajax --------> _resp_        vom.reInit
@@ -14,8 +15,8 @@ var config = {
 import { Ajax } from "./source/ajax";
 import { fragmentRefresh, RefreshManager } from "./source/snippet";
 import { renderPage, Viewer } from "./source/render";
-// import { vom } from "./source/i";
 // import { vom } from "./source/base"; //*/
 
-vom.reInit();
+// vom.init()
+lPage.init();
 

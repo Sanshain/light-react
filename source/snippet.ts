@@ -3,7 +3,7 @@ import {dom, search_fixed, loc } from "./common"
 import { renderPage } from "./render";
 import { Ajax } from "./ajax";
 
-// import {vom} from "./base"
+import { vom } from "./base"
 
 var Leaser = {
 	responseTime : 500,									// response time waiting
@@ -12,7 +12,7 @@ var Leaser = {
 
 	showStyle:'come_in',
 	hideStyle : 'come_out',	
-	onErroStyle : 'resp_err',
+	onErroStyle : 'resp_err',	
 	leafStyle : 'come',									// animation style
 
 	onShowEvent : () => {},

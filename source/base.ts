@@ -2,22 +2,14 @@
 
 import { fragmentRefresh } from "./snippet";
 
-
-
-
-
-
-
-
-
 namespace om{	
 
 	/*! 
 		функции инициализации фрагментов
 	*/
-	vom.spa = false;
+	lPage.spa = false;
 	
-	vom.add = function(container : string| HTMLElement, elem:string|HTMLElement, cls?:string):HTMLElement
+	lPage.add = function(container : string| HTMLElement, elem:string|HTMLElement, cls?:string):HTMLElement
 	{
 		if (typeof container == 'string') container = document.querySelector(container) as HTMLElement;
 		
@@ -34,7 +26,7 @@ namespace om{
 	};
 
 
-	vom.create = function(tagname: string, attrs: object):HTMLElement{
+	lPage.create = function(tagname: string, attrs: object):HTMLElement{
 		var elem = document.createElement(tagname);
 		for (var attr in attrs){
 			elem[attr]=attrs[attr];
@@ -43,13 +35,13 @@ namespace om{
 	}
 		
 
-	vom.parent_container = function(cfield: HTMLElement){
+	lPage.parent_container = function(cfield: HTMLElement){
 		
 		var _root = cfield.parentElement;
 		
 		if (_root.id) return _root;
 		else 
-			return vom.parent_container(_root);
+			return lPage.parent_container(_root);
 
 	}	
 
@@ -59,7 +51,7 @@ namespace om{
 	 * @static 
 	 * @param elem - элемент-контейнер, внутри которого нужно сделать переинициализацию компонентов навигации
 	 */
-	vom.reInit = function(elem?: HTMLElement){
+	lPage.init = function(elem?: HTMLElement){
 
 		var routes = (elem || document).querySelectorAll('[data-_refresh]') as NodeListOf<HTMLElement>;
 		
@@ -75,12 +67,10 @@ namespace om{
 			//if (activeElem) activeElem.focus();			
 		}, 1000);//*/			
 	}
-
 }	
 
 
-
-vom = function(elem){
+lPage = function(elem: HTMLElement){
 
 	var robj: {state? : string, elem: HTMLElement} = {elem: elem};
 	
@@ -111,6 +101,7 @@ vom = function(elem){
 	return robj;
 }
 
+export var vom = lPage;
 
 // function Renderer(boxes: any){ return render_page; }
 
