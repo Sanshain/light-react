@@ -297,7 +297,7 @@ export class Ajax{
 		for (var key=0;key<frm.children.length;key++){
 			
 			if (['input','textarea'].indexOf(frm.children[key].tagName.toLowerCase()) < 0) continue;
-				
+							
 			data += '&' + (frm.children[key] as Input).name + '=';
 			data += encodeURIComponent((frm.children[key] as Input).value);			
 						

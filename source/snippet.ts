@@ -1,7 +1,9 @@
 
 import {dom, search_fixed, loc } from "./common"
-import {vom, renderPage} from "./base"
+import { renderPage } from "./render";
 import { Ajax } from "./ajax";
+
+// import {vom} from "./base"
 
 var Leaser = {
 	responseTime : 500,									// response time waiting

@@ -8,11 +8,17 @@ export default {
   output: {  
     file: 'release/lib.js',
     format: 'cjs'
-    // format: 'iife',
+    // format: 'iife'
     // format: 'esm'
-  },  
+  },
   plugins: [
-    typescript({module: 'CommonJS', tsconfig: false, lib: ["es5", "es6", "dom"], target: "es5"}),
+    typescript({
+      module: 'CommonJS', 
+      // tsconfig: false, 
+      lib: ["es6", "dom"], //es5
+      target: "es5",
+      sourceMap: true
+    }),
     commonjs({ extensions: ['.js', '.ts'] }) 
   ]
 }
