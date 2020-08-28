@@ -61,9 +61,9 @@ For example conisdes following switch:
 The map `mainsection>section1.section2` will be used to create a list of items to request to the server. For example for this html:
 
 ```html
-<div id=mainsection>
-  <div id=section1>
-  <div id=section2>
+<div id='mainsection'>
+  <div id='section1'>
+  <div id='section2'>
     
 </div>
 ```
@@ -73,8 +73,8 @@ Switch returns list of `section1` and `section2` elements to server request, bec
 for this one: 
 
 ```html
-<div id=mainsection>
-  <div id=section2>
+<div id='mainsection'>
+  <div id='section2'>
     
 </div>
 ```
@@ -83,10 +83,10 @@ returns list of single `mainsection` element, because `section1` does not exists
 Nest example: `mainsection>*.section3` for following html-code: 
 
 ```html
-<div id=mainsection>
-  <div id=section1>
-  <div id=section2>
-  <div id=section3>
+<div id='mainsection'>
+  <div id='section1'>
+  <div id='section2'>
+  <div id='section3'>
     
 </div>
 ```
@@ -95,8 +95,8 @@ returns list of all child elements (`[section1,section2,section3]`) (look `*` me
 But for this one
 
 ```html
-<div id=mainsection>
-  <div id=section1>
+<div id='mainsection'>
+  <div id='section1'>
     
 </div>
 ```
@@ -108,8 +108,8 @@ More samples:
 `<section3`
 
 ```html
-<div id=mainsection>
-  <div id=section3>
+<div id='mainsection'>
+  <div id='section3'>
     
 </div>
 ```
@@ -128,8 +128,8 @@ For `data-_refresh` status mark assigns optional after mark `~`:
 Here `state` is the status of the element. For example look this:
 
 ```html
-<div id=aside data-state=state>
-  <div id=section3>
+<div id='aside' data-state='state'>
+  <div id='section3'>
     
 </div>
 ```
@@ -156,6 +156,6 @@ In last case status is defined based on the first class of the child element
 
 <h3 align=center> Containers meaning </h3>
 
-Container is either element having id. If container is not detected, occurs appeal to root container (by default has id='content'). Otherwise, the page will be completely reloaded.
+Container is either element having id. If container is not detected, occurs appeal to root container (by default has `id='content'`). Otherwise, the page will be completely reloaded.
 
 For more detail look the project samples and may the force be with you
