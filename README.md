@@ -154,6 +154,8 @@ and even that
 In last case status is defined based on the first class of the child element
 
 
-<h3 align=center> Containers </h3>
+<h3 align=center> Containers meaning </h3>
 
-Containers is either elements having id. If container is not detected occurs appeal to root Container (by default id='content'). Otherwise, the page will be completely reloaded
+Container is either element having id. If container is not detected, occurs appeal to root container (by default has id='content'). Otherwise, the page will be completely reloaded.
+
+For more detail look the project samples and may the force be with you
