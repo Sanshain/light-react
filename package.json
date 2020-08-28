@@ -12,6 +12,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^15.0.0",
     "@rollup/plugin-typescript": "^5.0.2",
+    "rollup-plugin-uglify": "^6.0.4",
     "tslib": "^2.0.1",
     "typescript": "^3.9.7"
   },
