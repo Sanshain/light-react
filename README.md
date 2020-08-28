@@ -58,7 +58,7 @@ For example conisdes following switch:
 
 `<a data-_refresh='mainsection>section1.section2'>Get some data</a>`
 
-the map `mainsection>section1.section2` will be used to create a list of items to request to the server. For example for this html:
+The map `mainsection>section1.section2` will be used to create a list of items to request to the server. For example for this html:
 
 ```html
 <div id=mainsection>
@@ -116,7 +116,9 @@ More samples:
 also returns `mainsection` (the nearest parent container)
 
 Attribute `data-_require` works like `data-_refresh`, but it has a slightly different meaning:
+
 `data-_require` - send a request for each item in the list. If the element specified in it is not present, it will send a request to the nearest parent or root parent
+
 `data-_refresh` - sends a request only to the elements specified in it that are not on the page or their state does not match the required one
 
 For `data-_refresh` status mark assigns optional after mark `~`:
