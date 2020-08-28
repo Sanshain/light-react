@@ -36,9 +36,9 @@ Switches can be any HTML elements with the `data-to` attribute, links, or button
 - `data-_require` - unnecessary. Contains optional elements map, required on updated page
 - `data-to` - usually contains url-address inside HTML-elements, which does not consist of native attributes for url-address holding (like `href` for anchor and `formAction` for button)
 
-## How its work?
+<h3 align=center> How switches work </h3>
 
-`data-_refresh` contains a map consisting of the following comma-separated blocks:
+Attribute `data-_refresh` of some **switch** contains a map consisting of the following comma-separated blocks:
 
 ```
 [<]section_name[>][[*|(subsection1[.subsection2[.subsection3]])].]subsection
@@ -54,11 +54,11 @@ The symbols used inside this block have the following meaning:
 
 `<` - indicates unknown on render time parent element. It means any container element on top level
 
-For example the simplest case:
+For example conisdes following switch:
 
 `<a data-_refresh='mainsection>section1.section2'>Get some data</a>`
 
-the map `mainsection>section1.section2` will be used to create a list of items to request to the server. Consider next html:
+the map `mainsection>section1.section2` will be used to create a list of items to request to the server. For example for this html:
 
 ```html
 <div id=mainsection>
@@ -68,7 +68,7 @@ the map `mainsection>section1.section2` will be used to create a list of items t
 </div>
 ```
 
-This returns list of `section1` and `section2` elements for request, because its exists
+Switch returns list of `section1` and `section2` elements to server request, because its exists
 
 for this one: 
 
@@ -78,9 +78,9 @@ for this one:
     
 </div>
 ```
-This returns list of `mainsection` elements for request, because `section1` does not exists.
+returns list of single `mainsection` element, because `section1` does not exists.
 
-`mainsection>*.section3` for following one: 
+Nest example: `mainsection>*.section3` for following html-code: 
 
 ```html
 <div id=mainsection>
@@ -90,7 +90,7 @@ This returns list of `mainsection` elements for request, because `section1` does
     
 </div>
 ```
-returns `section1.section2.section3`
+returns list of all child elements (`[section1,section2,section3]`) (look `*` meaning)
 
 But for this one
 
@@ -115,5 +115,43 @@ More samples:
 ```
 also returns `mainsection` (the nearest parent container)
 
+Attribute `data-_require` works like `data-_refresh`, but it has a slightly different meaning:
+`data-_require` - send a request for each item in the list. If the element specified in it is not present, it will send a request to the nearest parent or root parent
+`data-_refresh` - sends a request only to the elements specified in it that are not on the page or their state does not match the required one
+
+For `data-_refresh` status mark assigns optional after mark `~`:
+
+```aside~state>note_create```
+
+Here `state` is the status of the element. For example look this:
+
+```html
+<div id=aside data-state=state>
+  <div id=section3>
+    
+</div>
+```
+
+or 
 
 
+```html
+<div id='aside'>
+  <div id='state'>
+</div>
+```
+
+and even that
+
+```html
+<div id=aside>
+  <div class="state ui">
+</div>
+```
+
+In last case status is defined based on the first class of the child element
+
+
+<h3 align=center> Containers </h3>
+
+Containers is either elements having id. If container is not detected occurs appeal to root Container (by default id='content'). Otherwise, the page will be completely reloaded
