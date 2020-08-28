@@ -1,24 +1,24 @@
 
 
 import typescript from '@rollup/plugin-typescript';          // https://github.com/rollup/plugins/tree/master/packages/typescript
-import commonjs from '@rollup/plugin-commonjs';
 
 export default {
   input: 'init.ts',
   output: {  
     file: 'release/lib.js',
-    format: 'cjs'
-    // format: 'iife'
+    name: 'vom',
+    // format: 'cjs'
+    format: 'iife',
+    sourcemap: true    
     // format: 'esm'
   },
   plugins: [
     typescript({
-      module: 'CommonJS', 
+      // module: 'CommonJS', 
       // tsconfig: false, 
       lib: ["es6", "dom"], //es5
       target: "es5",
       sourceMap: true
-    }),
-    commonjs({ extensions: ['.js', '.ts'] }) 
+    }),    
   ]
 }

@@ -1,7 +1,7 @@
 
 
 
-import { isIe, FormData } from "./native_dom"
+import { isIe } from "./native_dom"
 import { u } from "./native-lang"
 
 import { dom } from "./common";
@@ -9,8 +9,11 @@ import { object } from "underscore";
 // declare var isIe: () => boolean;
 
 
-
-
+declare var FormData : {
+	new(form?: HTMLFormElement): FormData;
+	prototype: FormData;
+	create: (key: string, value: string) => FormData;
+}
 
 var ENCTYPE = 'application/x-www-form-urlencoded';
 

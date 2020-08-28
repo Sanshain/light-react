@@ -2,10 +2,11 @@
   "compilerOptions": {    
     "sourceMap": true,
     "removeComments": true,
-    "target": "es6",
-    "module": "commonjs"                    // dont work if disabled inside rollup.config
+    "target": "es6",    
+    //"module": "commonjs"                    // dont work if disabled inside rollup.config
+    "module": "ES2015"                           // dont work if disabled inside rollup.config
   },
-  "include": ["init.ts", "./source/**/*"]
+  "include": ["init.ts", "./source/global.d.ts", "./source/*"]
 }
 
 
