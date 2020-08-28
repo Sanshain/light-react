@@ -6,7 +6,7 @@ import { uglify } from "rollup-plugin-uglify";
 export default {
   input: 'init.ts',
   output: {  
-    file: 'release/lib.js',
+    file: 'release/slight-page.js',
     name: 'vom',
     // format: 'cjs'
     format: 'iife',
@@ -21,7 +21,7 @@ export default {
       target: "es5",
       sourceMap: true
     }),
-    uglify({
+    /*uglify({
       mangle: {
         keep_fnames : true,
         ie8: true 
