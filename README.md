@@ -26,6 +26,10 @@ Also for the same reason, the solution is a good for low-budget applications on 
 ```
 npm install Sanshain/soft-page
 ```
+or
+```
+git clone https://github.com/Sanshain/soft-page.git
+```
 
 ## Quick start
 
