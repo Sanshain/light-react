@@ -21,6 +21,15 @@ where developers fight for every milli- and sometimes even a nano-second and do 
 Also for the same reason, the solution is a good for low-budget applications on limited hosting capabilities 
 (without the ability to deploy `SSR` due to the lack of pre-installed nodejs and lack of rights to install it)
 
+## Installation
+
+```
+npm install Sanshain/soft-page
+```
+
+## Quick start
+
+`// todo`
 
 <h2 align=center> How it works? </h2>
 
@@ -36,7 +45,7 @@ Switches can be any HTML elements with the `data-to` attribute, links, or button
 - `data-_require` - unnecessary. Contains optional elements map, required on updated page
 - `data-to` - usually contains url-address inside HTML-elements, which does not consist of native attributes for url-address holding (like `href` for anchor and `formAction` for button)
 
-<h3 align=center> How switches work </h3>
+<h3 align=center> How switches works </h3>
 
 Attribute `data-_refresh` of some **switch** contains a map consisting of the following comma-separated blocks:
 
